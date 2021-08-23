@@ -62,7 +62,6 @@ delta_days = 2
 delta_days_v = 6
 wait_light = 5
 
-GPIO.cleanup()
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(4, GPIO.OUT)
 GPIO.setup(22, GPIO.OUT)
@@ -81,7 +80,7 @@ def ping(host):
     # Building the command. Ex: "ping -c 1 google.com"
     command = ['ping', param, '1', host]
 
-    return subprocess.call(command) == 0
+    return subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 
 def load_json():
