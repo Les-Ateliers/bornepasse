@@ -149,69 +149,69 @@ def decodeDisplay(image):
 
         if (data[0] == 0x78):
             data = zlib.decompress(data)
-            decoded = CoseMessage.decode(data)
-            if KID in decoded.phdr.keys():
-               given_kid = decoded.phdr[KID]
+        decoded = CoseMessage.decode(data)
+        if KID in decoded.phdr.keys():
+          given_kid = decoded.phdr[KID]
+        else:
+          given_kid = decoded.uhdr[KID]
+        try:
+          key = kids[b64encode(given_kid).decode('ASCII')]['key']
+        except KeyError:
+          key = None
+        decoded.key = key
+        payload = cbor2.loads(decoded.payload)
+        dob = date.fromisoformat(payload.get(-260).get(1).get('dob'))
+        dob = dob.strftime("%d/%m/%Y")
+        text = payload.get(-260).get(1).get('nam').get('gnt') + ' ' + payload.get(-260).get(1).get('nam').get('fnt') + ' - ' + dob
+        int_payload = payload.get(-260).get(1)
+        if(int_payload.get('r')):
+          du = date.fromisoformat(int_payload.get('r')[0].get('du'))
+          df = date.fromisoformat(int_payload.get('r')[0].get('df'))
+          if(du >= date.today() and df <= date.today()):
+            status_valid = True
+          else:
+            status_valid = False
+        elif(int_payload.get('t')):
+          sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
+          delta = datetime.now(timezone.utc) - sc
+          if(delta > timedelta(days=delta_days)):
+            status_valid = False
+          else:
+            status_valid = True
+        elif(int_payload.get('v')):
+          if(int_payload.get('v')[0].get('dn') == 2):
+            dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
+            deltav = datetime.now(timezone.utc) - dt
+            if(deltav > timedelta(days=delta_days_v)):
+              status_valid = True
             else:
-               given_kid = decoded.uhdr[KID]
-            try:
-              key = kids[b64encode(given_kid).decode('ASCII')]['key']
-            except KeyError:
-              key = None
-            decoded.key = key
-            payload = cbor2.loads(decoded.payload)
-            dob = date.fromisoformat(payload.get(-260).get(1).get('dob'))
-            dob = dob.strftime("%d/%m/%Y")
-            text = payload.get(-260).get(1).get('nam').get('gnt') + ' ' + payload.get(-260).get(1).get('nam').get('fnt') + ' - ' + dob
-            int_payload = payload.get(-260).get(1)
-            if(int_payload.get('r')):
-              du = date.fromisoformat(int_payload.get('r')[0].get('du'))
-              df = date.fromisoformat(int_payload.get('r')[0].get('df'))
-              if(du >= date.today() and df <= date.today()):
-                status_valid = True
-              else:
-                status_valid = False
-            elif(int_payload.get('t')):
-                sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
-                delta = datetime.now(timezone.utc) - sc
-                if(delta > timedelta(days=delta_days)):
-                    status_valid = False
-                else:
-                    status_valid = True
-            elif(int_payload.get('v')):
-              if(int_payload.get('v')[0].get('dn') == 2):
-                dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
-                deltav = datetime.now(timezone.utc) - dt
-                if(deltav > timedelta(days=delta_days_v)):
-                  status_valid = True
-                else:
-                  status_valid = False
-              else:
-                status_valid = False
+              status_valid = False
+          else:
+            status_valid = False
 
-            try:
-              status_sign = decoded.verify_signature()
-            except CoseException:
-              status_sign = False
+        try:
+          status_sign = decoded.verify_signature()
+        except CoseException:
+          status_sign = False
 
-            if(status_sign == True):
-              signature_from = isoparse(kids[b64encode(given_kid).decode('ASCII')]['from'])
-              signature_to = isoparse(kids[b64encode(given_kid).decode('ASCII')]['to'])
-              now = datetime.now(timezone.utc)
-              if(signature_from > now or now > signature_to):
-                status_sign = False
+        if(status_sign == True):
+          signature_from = isoparse(kids[b64encode(given_kid).decode('ASCII')]['from'])
+          signature_to = isoparse(kids[b64encode(given_kid).decode('ASCII')]['to'])
+          now = datetime.now(timezone.utc)
+          if(signature_from > now or now > signature_to):
+            status_sign = False
 
-            total_status = status_sign and status_valid
-            if(total_status == True):
-              color = (0, 255, 0)
-            else:
-              color = (0, 0, 255)
-            cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6)
-            cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+        total_status = status_sign and status_valid
+        if(total_status == True):
+          color = (0, 255, 0)
+        else:
+          color = (0, 0, 255)
+        cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6)
+        cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
-            if(thread_running == False):
-              t1 = threading.Thread(target=print_hello, args=(total_status,))
-              t1.start()
+        if(thread_running == False):
+          t1 = threading.Thread(target=print_hello, args=(total_status,))
+          t1.start()
 
     return image
 
