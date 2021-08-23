@@ -8,6 +8,6 @@ The `/etc/rc.local` line to run it properly could be something like this:
 su pi -c /home/pi/qrcode.py </dev/null >/tmp/qrcode.log 2>&1 &
 ```
 
-The principle of operation is inspired by the work of [https://github.com/lovasoa/sanipasse](lovasoa) and [https://github.com/gilbsgilbs](gilbsgilbs)'s tweets on how all this works. 
+The principle of operation is inspired by the work of [lovasoa](https://github.com/lovasoa/sanipasse) and [gilbsgilbs](https://github.com/gilbsgilbs)'s tweets on how all this works. 
 
-This system does not scan 2D-DOC codes (Datamatrix), mostly because [https://github.com/NaturalHistoryMuseum/pylibdmtx/](pylibdmtx) is incredibly slow and I could not find suitable other implementations for Python on Datamatrix reading.
+This system does not scan 2D-DOC codes (Datamatrix), mostly because [pylibdmtx](https://github.com/NaturalHistoryMuseum/pylibdmtx/) is incredibly slow and I could not find suitable other implementations for Python on Datamatrix reading.
