@@ -91,6 +91,7 @@ def load_json():
 	for kid_b64 in json_obj:
 		add_kid(kid_b64, json_obj[kid_b64]['publicKeyPem'], json_obj[kid_b64]['notBefore'], json_obj[kid_b64]['notAfter'])
 	print("Clés chargées : " + str(len(kids)))
+	GPIO.output(22, GPIO.LOW)
 
 def add_kid(kid_b64, key_b64, valid_from, valid_to):
         kid = b64decode(kid_b64 + "===")
@@ -258,6 +259,7 @@ for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, clean)
 
 if __name__ == '__main__':
+    GPIO.output(22, GPIO.HIGH)
     while True:
       if(ping("8.8.8.8") == True):
         load_json()
