@@ -58,8 +58,8 @@ status_sign = False
 
 thread_running = False
 
-delta_days = 2
-delta_days_v = 6
+delta_days = 3
+delta_days_v = 7
 wait_light = 5
 
 GPIO.setmode(GPIO.BCM)
@@ -179,7 +179,7 @@ def decodeDisplay(image):
           else:
             status_valid = True
         elif(int_payload.get('v')):
-          if(int_payload.get('v')[0].get('dn') == 2):
+          if(int_payload.get('v')[0].get('dn') == int_payload.get('v')[0].get('sd')):
             dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
             deltav = datetime.now(timezone.utc) - dt
             if(deltav > timedelta(days=delta_days_v)):
