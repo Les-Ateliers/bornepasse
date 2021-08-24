@@ -5,6 +5,8 @@ import json
 import time
 import threading
 
+import hashlib
+
 import requests
 
 import sys
