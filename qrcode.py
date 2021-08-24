@@ -182,6 +182,7 @@ def decodeDisplay(image):
           if(int_payload.get('v')[0].get('dn') == int_payload.get('v')[0].get('sd')):
             dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
             deltav = datetime.now(timezone.utc) - dt
+            hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
             if(deltav > timedelta(days=delta_days_v)):
               status_valid = True
             else:
