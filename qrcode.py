@@ -63,6 +63,8 @@ thread_running = False
 delta_days = 3
 delta_days_v = 7
 wait_light = 5
+delta_months_r = 6
+valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(4, GPIO.OUT)
@@ -169,28 +171,38 @@ def decodeDisplay(image):
         if(int_payload.get('r')):
           du = date.fromisoformat(int_payload.get('r')[0].get('du'))
           df = date.fromisoformat(int_payload.get('r')[0].get('df'))
-          if(du >= date.today() and df <= date.today()):
+          fr = date.fromisoformat(int_payload.get('r')[0].get('fr'))
+          deltam = date.now(timezone.utc) - fr
+          if(du >= date.today() and df <= date.today() and deltam < timedelta(months=delta_months_r)):
             status_valid = True
           else:
             status_valid = False
+            failure_reason = "Recovery time window exceeded (too soon or too late)"
         elif(int_payload.get('t')):
           sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
           delta = datetime.now(timezone.utc) - sc
           if(delta > timedelta(days=delta_days)):
             status_valid = False
+            failure_reason = "Test has expired"
           else:
-            status_valid = True
+            if(int_payload.get('t')[0].get('tr') == "260415000"):
+              status_valid = True
+            else:
+              status_valid = False
+              failure_reason = "Test result was : Detected"
         elif(int_payload.get('v')):
           if(int_payload.get('v')[0].get('dn') == int_payload.get('v')[0].get('sd')):
             dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
             deltav = datetime.now(timezone.utc) - dt
             hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
-            if(deltav > timedelta(days=delta_days_v)):
+            if(deltav > timedelta(days=delta_days_v) and int_payload.get('v')[0].get('vp') in valid_vaccines):
               status_valid = True
             else:
               status_valid = False
+              failure_reason = "Vaccination scheme delay is too short"
           else:
             status_valid = False
+            failure_reason = "Vaccination scheme incomplete"
 
         try:
           status_sign = decoded.verify_signature()
