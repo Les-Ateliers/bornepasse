@@ -66,6 +66,7 @@ wait_light = 5
 delta_days_r = 183
 valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
+not_detected = "260415000"
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(4, GPIO.OUT)
@@ -186,7 +187,7 @@ def decodeDisplay(image):
             status_valid = False
             failure_reason = "Test has expired"
           else:
-            if(int_payload.get('t')[0].get('tr') == "260415000"):
+            if(int_payload.get('t')[0].get('tr') == not_detected):
               status_valid = True
             else:
               status_valid = False
