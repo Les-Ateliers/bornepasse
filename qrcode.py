@@ -63,7 +63,7 @@ thread_running = False
 delta_days = 3
 delta_days_v = 7
 wait_light = 5
-delta_months_r = 6
+delta_days_r = 183
 valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
 
@@ -173,8 +173,8 @@ def decodeDisplay(image):
           du = date.fromisoformat(int_payload.get('r')[0].get('du'))
           df = date.fromisoformat(int_payload.get('r')[0].get('df'))
           fr = date.fromisoformat(int_payload.get('r')[0].get('fr'))
-          deltam = date.now(timezone.utc) - fr
-          if(du >= date.today() and df <= date.today() and deltam < timedelta(months=delta_months_r)):
+          deltam = date.today() - fr
+          if(du >= date.today() and df <= date.today() and deltam < timedelta(days=delta_days_r)):
             status_valid = True
           else:
             status_valid = False
