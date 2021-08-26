@@ -64,6 +64,7 @@ delta_days = 3
 delta_days_v = 7
 wait_light = 5
 delta_months_r = 6
+valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
 
 GPIO.setmode(GPIO.BCM)
@@ -195,8 +196,12 @@ def decodeDisplay(image):
             dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
             deltav = datetime.now(timezone.utc) - dt
             hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
-            if(deltav > timedelta(days=delta_days_v) and int_payload.get('v')[0].get('vp') in valid_vaccines):
-              status_valid = True
+            if(deltav > timedelta(days=delta_days_v)):
+              if(int_payload.get('v')[0].get('vp') in valid_prophylaxis and int_payload.get('v')[0].get('mp') in valid_vaccines):
+                status_valid = True
+              else:
+                status_valid = False
+                failure_reason = "Unsupported vaccine/prophylaxis types"
             else:
               status_valid = False
               failure_reason = "Vaccination scheme delay is too short"
@@ -219,13 +224,14 @@ def decodeDisplay(image):
         total_status = status_sign and status_valid
         if(total_status == True):
           color = (0, 255, 0)
+          failure_reason = ""
         else:
           color = (0, 0, 255)
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6)
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
         if(thread_running == False):
-          t1 = threading.Thread(target=print_hello, args=(total_status, failure_rason,))
+          t1 = threading.Thread(target=print_hello, args=(total_status, failure_reason,))
           t1.start()
 
     return image
