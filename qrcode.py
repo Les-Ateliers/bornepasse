@@ -225,13 +225,13 @@ def decodeDisplay(image):
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
         if(thread_running == False):
-          t1 = threading.Thread(target=print_hello, args=(total_status,))
+          t1 = threading.Thread(target=print_hello, args=(total_status, failure_rason,))
           t1.start()
 
     return image
 
 
-def print_hello(status):
+def print_hello(status, reason):
     global thread_running
     thread_running = True
     led = 22
@@ -239,7 +239,7 @@ def print_hello(status):
     if(status == True):
       color = 'verte'
       led = 4
-    print('Lumière ' + color)
+    print('Lumière ' + color + reason)
     GPIO.output(led, GPIO.HIGH)
     GPIO.output(6, GPIO.LOW)
     time.sleep(wait_light)
