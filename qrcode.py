@@ -195,6 +195,7 @@ def decodeDisplay(image):
           df = date.fromisoformat(int_payload.get('r')[0].get('df'))
           fr = date.fromisoformat(int_payload.get('r')[0].get('fr'))
           deltam = date.today() - fr
+          hash = hashlib.sha256((int_payload.get('r')[0].get('co')+int_payload.get('r')[0].get('ci')).encode()).hexdigest()
           if(du >= date.today() and df <= date.today() and deltam < timedelta(days=delta_days_r)):
             status_valid = True
           else:
@@ -203,6 +204,7 @@ def decodeDisplay(image):
         elif(int_payload.get('t')):
           sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
           delta = datetime.now(timezone.utc) - sc
+          hash = hashlib.sha256((int_payload.get('t')[0].get('co')+int_payload.get('t')[0].get('ci')).encode()).hexdigest()
           if(delta > timedelta(days=delta_days)):
             status_valid = False
             failure_reason = "Test has expired"
