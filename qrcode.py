@@ -9,12 +9,18 @@ import hashlib
 
 import requests
 
+import configparser
+
 import sys
 
 import platform
 import subprocess
 
-import RPi.GPIO as GPIO
+try:
+  import RPi.GPIO as GPIO
+  raspberry = True
+except ModuleNotFoundError:
+  raspberry = False
 
 from signal import *
 
@@ -60,6 +66,8 @@ status_sign = False
 
 thread_running = False
 
+config = None
+
 delta_days = 3
 delta_days_v = 7
 wait_light = 5
@@ -68,11 +76,17 @@ valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
 not_detected = "260415000"
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(4, GPIO.OUT)
-GPIO.setup(22, GPIO.OUT)
-GPIO.setup(6, GPIO.OUT)
-GPIO.setup(26, GPIO.OUT)
+if(raspberry == True):
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setup(4, GPIO.OUT)
+  GPIO.setup(22, GPIO.OUT)
+  GPIO.setup(6, GPIO.OUT)
+  GPIO.setup(26, GPIO.OUT)
+
+def getConfig():
+	config = configparser.ConfigParser()
+	config.read('config.ini')
+	return config
 
 def ping(host):
     """
@@ -88,6 +102,8 @@ def ping(host):
 
     return subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
+def put_stats(hash):
+	response = requests.post('https://httpbin.org/post', data = {'hash': hash })
 
 def load_json():
 	jsonraw = ""
@@ -97,7 +113,8 @@ def load_json():
 	for kid_b64 in json_obj:
 		add_kid(kid_b64, json_obj[kid_b64]['publicKeyPem'], json_obj[kid_b64]['notBefore'], json_obj[kid_b64]['notAfter'])
 	print("Clés chargées : " + str(len(kids)))
-	GPIO.output(22, GPIO.LOW)
+	if(raspberry == True):
+		GPIO.output(22, GPIO.LOW)
 
 def add_kid(kid_b64, key_b64, valid_from, valid_to):
         kid = b64decode(kid_b64 + "===")
@@ -247,12 +264,14 @@ def print_hello(status, reason):
       color = 'verte'
       led = 4
     print('Lumière ' + color + reason)
-    GPIO.output(led, GPIO.HIGH)
-    GPIO.output(6, GPIO.LOW)
+    if(raspberry == True):
+      GPIO.output(led, GPIO.HIGH)
+      GPIO.output(6, GPIO.LOW)
     time.sleep(wait_light)
     print('Lumière éteinte')
-    GPIO.output(led, GPIO.LOW)
-    GPIO.output(6, GPIO.HIGH)
+    if(raspberry == True):
+      GPIO.output(led, GPIO.LOW)
+      GPIO.output(6, GPIO.HIGH)
     thread_running = False
 
 
@@ -273,18 +292,23 @@ def detect():
     cv2.destroyAllWindows()
 
 def clean(*args):
+    global raspberry
     print("Extinction des feux, nettoyage. Bye !")
-    GPIO.cleanup()
+    if(raspberry == True):
+      GPIO.cleanup()
     sys.exit(0)
 
 for sig in (SIGABRT, SIGILL, SIGINT, SIGSEGV, SIGTERM):
     signal(sig, clean)
 
 if __name__ == '__main__':
-    GPIO.output(22, GPIO.HIGH)
+    if(raspberry == True):
+      GPIO.output(22, GPIO.HIGH)
     while True:
       if(ping("8.8.8.8") == True):
         load_json()
+        config = getConfig()
         break
-    GPIO.output(6, GPIO.HIGH)
+    if(raspberry == True):
+      GPIO.output(6, GPIO.HIGH)
     detect()
