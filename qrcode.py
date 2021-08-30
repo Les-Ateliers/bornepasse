@@ -86,6 +86,7 @@ if(raspberry == True):
 def getConfig():
 	config = configparser.ConfigParser()
 	config.read('config.ini')
+	print("Config chargée")
 	return config
 
 def ping(host):
@@ -103,7 +104,8 @@ def ping(host):
     return subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 def put_stats(hash):
-	response = requests.post('https://httpbin.org/post', data = {'hash': hash })
+	global config
+	response = requests.post(config['general']['statsHost'], data = {'hash': hash, 'pass': config['general']['pass'] })
 
 def load_json():
 	jsonraw = ""
@@ -150,6 +152,7 @@ def remove_prefix(input_string, prefix):
     return input_string
 
 def decodeDisplay(image):
+    hash = None
     image = cv2.flip(image, 1)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     barcodes = pyzbar.decode(gray)
@@ -249,13 +252,13 @@ def decodeDisplay(image):
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
         if(thread_running == False):
-          t1 = threading.Thread(target=print_hello, args=(total_status, failure_reason,))
+          t1 = threading.Thread(target=print_hello, args=(total_status, failure_reason, hash,))
           t1.start()
 
     return image
 
 
-def print_hello(status, reason):
+def print_hello(status, reason, hash):
     global thread_running
     thread_running = True
     led = 22
@@ -267,6 +270,8 @@ def print_hello(status, reason):
     if(raspberry == True):
       GPIO.output(led, GPIO.HIGH)
       GPIO.output(6, GPIO.LOW)
+    if(hash is not None):
+      put_stats(hash)
     time.sleep(wait_light)
     print('Lumière éteinte')
     if(raspberry == True):
@@ -286,7 +291,8 @@ def detect():
 
         cv2.waitKey(5)
         # commented out : if you have a display available, you can draw details on screen
-        # cv2.imshow("camera", im)
+        if(raspberry == False):
+          cv2.imshow("camera", im)
 
     camera.release()
     cv2.destroyAllWindows()
@@ -306,8 +312,8 @@ if __name__ == '__main__':
       GPIO.output(22, GPIO.HIGH)
     while True:
       if(ping("8.8.8.8") == True):
-        load_json()
         config = getConfig()
+        load_json()
         break
     if(raspberry == True):
       GPIO.output(6, GPIO.HIGH)
