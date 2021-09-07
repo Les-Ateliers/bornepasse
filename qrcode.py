@@ -70,7 +70,8 @@ config = None
 
 delta_days = 3
 delta_days_v = 7
-wait_light = 5
+wait_light_red = 5
+wait_light_green = 2
 delta_days_r = 183
 valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
@@ -265,7 +266,9 @@ def print_hello(status, reason, hash):
     thread_running = True
     led = 22
     color = 'rouge'
+    wait_light = wait_light_red
     if(status == True):
+      wait_light = wait_light_green
       color = 'verte'
       led = 4
     print('Lumière ' + color + reason)
