@@ -59,10 +59,12 @@ import cv2
 import pyzbar.pyzbar as pyzbar
 
 kids = {}
+bl_hashes = {}
 keyid = None
 key = None
 status_valid = False
 status_sign = False
+status_not_blacklisted = True
 
 thread_running = False
 
@@ -116,8 +118,12 @@ def load_json():
 	for kid_b64 in json_obj:
 		add_kid(kid_b64, json_obj[kid_b64]['publicKeyPem'], json_obj[kid_b64]['notBefore'], json_obj[kid_b64]['notAfter'])
 	print("Clés chargées : " + str(len(kids)))
-	if(raspberry == True):
-		GPIO.output(22, GPIO.LOW)
+
+def load_blacklist():
+	global bl_hashes
+	response = requests.get("https://app-static.tousanticovid.gouv.fr/json/version-35/CertList/certlist.json")
+	bl_hashes = json.loads(response.content)
+	print("Hashes blacklistés chargés : " + str(len(bl_hashes)))
 
 def add_kid(kid_b64, key_b64, valid_from, valid_to):
         kid = b64decode(kid_b64 + "===")
@@ -233,6 +239,12 @@ def decodeDisplay(image):
             status_valid = False
             failure_reason = "Vaccination scheme incomplete"
 
+        if hash in bl_hashes:
+            status_not_blacklisted = False
+            failure_reason = "Hash is blacklisted"
+        else:
+            status_not_blacklisted = True
+
         try:
           status_sign = decoded.verify_signature()
         except CoseException:
@@ -245,7 +257,7 @@ def decodeDisplay(image):
           if(signature_from > now or now > signature_to):
             status_sign = False
 
-        total_status = status_sign and status_valid
+        total_status = status_sign and status_valid and status_not_blacklisted
         if(total_status == True):
           color = (0, 255, 0)
           failure_reason = ""
@@ -264,6 +276,7 @@ def put_stats_thread(hash):
     put_stats(hash)
 
 def disp_light(status, reason, hash):
+    print(hash)
     global thread_running
     thread_running = True
     led = 22
@@ -322,6 +335,9 @@ if __name__ == '__main__':
       if(ping("8.8.8.8") == True):
         config = getConfig()
         load_json()
+        load_blacklist()
+        if(raspberry == True):
+          GPIO.output(22, GPIO.LOW)
         break
     if(raspberry == True):
       GPIO.output(6, GPIO.HIGH)
