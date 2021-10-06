@@ -255,13 +255,15 @@ def decodeDisplay(image):
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
         if(thread_running == False):
-          t1 = threading.Thread(target=print_hello, args=(total_status, failure_reason, hash,))
+          t1 = threading.Thread(target=disp_light, args=(total_status, failure_reason, hash,))
           t1.start()
 
     return image
 
+def put_stats_thread(hash):
+    put_stats(hash)
 
-def print_hello(status, reason, hash):
+def disp_light(status, reason, hash):
     global thread_running
     thread_running = True
     led = 22
@@ -276,7 +278,8 @@ def print_hello(status, reason, hash):
       GPIO.output(led, GPIO.HIGH)
       GPIO.output(6, GPIO.LOW)
     if(hash is not None):
-      put_stats(hash)
+      t_put_stats = threading.Thread(target=put_stats_thread, args=(hash,))
+      t_put_stats.start()
     time.sleep(wait_light)
     print('Lumière éteinte')
     if(raspberry == True):
