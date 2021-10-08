@@ -73,7 +73,7 @@ config = None
 delta_days = 3
 delta_days_v = 7
 wait_light_red = 5
-wait_light_green = 1
+wait_light_green = 2
 delta_days_r = 183
 valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
@@ -298,6 +298,7 @@ def disp_light(status, reason, hash):
     if(raspberry == True):
       GPIO.output(led, GPIO.LOW)
       GPIO.output(6, GPIO.HIGH)
+    time.sleep(1)
     thread_running = False
 
 
