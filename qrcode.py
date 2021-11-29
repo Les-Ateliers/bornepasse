@@ -78,6 +78,7 @@ delta_days_r = 183
 valid_prophylaxis = { "J07BX03" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
 not_detected = "260415000"
+booster = 3
 
 if(raspberry == True):
   GPIO.setmode(GPIO.BCM)
@@ -193,6 +194,7 @@ def decodeDisplay(image):
           key = None
         decoded.key = key
         payload = cbor2.loads(decoded.payload)
+        print(payload)
         dob = date.fromisoformat(payload.get(-260).get(1).get('dob'))
         dob = dob.strftime("%d/%m/%Y")
         text = payload.get(-260).get(1).get('nam').get('gnt') + ' ' + payload.get(-260).get(1).get('nam').get('fnt') + ' - ' + dob
@@ -233,8 +235,11 @@ def decodeDisplay(image):
                 status_valid = False
                 failure_reason = "Unsupported vaccine/prophylaxis types"
             else:
-              status_valid = False
-              failure_reason = "Vaccination scheme delay is too short"
+              if(int_payload.get('v')[0].get('sd') == booster):
+                status_valid = True
+              else:
+                status_valid = False
+                failure_reason = "Vaccination scheme delay is too short"
           else:
             status_valid = False
             failure_reason = "Vaccination scheme incomplete"
