@@ -70,7 +70,7 @@ thread_running = False
 
 config = None
 
-delta_days = 3
+delta_days = 2
 delta_days_v = 7
 wait_light_red = 5
 wait_light_green = 2
