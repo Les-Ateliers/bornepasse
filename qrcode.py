@@ -75,8 +75,8 @@ delta_days_v = 7
 wait_light_red = 5
 wait_light_green = 2
 delta_days_r = 183
-valid_prophylaxis = { "J07BX03" }
-valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525" }
+valid_prophylaxis = { "J07BX03", "1119349007", "1119305005" }
+valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525", "Covishield", "R-Covi", "R-COVI", "Covid-19 vaccine (recombinante)" }
 not_detected = "260415000"
 booster = 3
 
