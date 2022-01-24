@@ -211,29 +211,22 @@ def decodeDisplay(image):
             status_valid = False
             failure_reason = "Recovery time window exceeded (too soon or too late)"
         elif(int_payload.get('t')):
-          sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
-          delta = datetime.now(timezone.utc) - sc
-          hash = hashlib.sha256((int_payload.get('t')[0].get('co')+int_payload.get('t')[0].get('ci')).encode()).hexdigest()
-          if(delta > timedelta(days=delta_days)):
-            status_valid = False
-            failure_reason = "Test has expired"
-          else:
-            if(int_payload.get('t')[0].get('tr') == not_detected):
-              status_valid = True
-            else:
-              status_valid = False
-              failure_reason = "Test result was : Detected"
+          status_valid = False
+          failure_reason = "Tests are not valid anymore, whatever the result (Passe vaccinal)"
         elif(int_payload.get('v')):
           if(int_payload.get('v')[0].get('dn') == int_payload.get('v')[0].get('sd')):
             dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
             deltav = datetime.now(timezone.utc) - dt
             hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
-            if(deltav > timedelta(days=delta_days_v)):
+            if(deltav > timedelta(days = delta_days_v)):
               if(int_payload.get('v')[0].get('vp') in valid_prophylaxis and int_payload.get('v')[0].get('mp') in valid_vaccines):
                 status_valid = True
               else:
                 status_valid = False
                 failure_reason = "Unsupported vaccine/prophylaxis types"
+              if(deltav > timedelta(days = delta_days_r)):
+                status_valid = False
+                failure_reason = "Last vaccine shot is too old"
             else:
               if(int_payload.get('v')[0].get('sd') == booster):
                 status_valid = True
