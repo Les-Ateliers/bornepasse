@@ -75,6 +75,8 @@ delta_days_v = 7
 wait_light_red = 5
 wait_light_green = 2
 delta_days_r = 183
+# 15th feb 2022: max 120 days after second dose
+delta_days_passe_v = 120
 valid_prophylaxis = { "J07BX03", "1119349007", "1119305005" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525", "Covishield", "R-Covi", "R-COVI", "Covid-19 vaccine (recombinante)", "EU/1/21/1618" }
 not_detected = "260415000"
@@ -214,10 +216,10 @@ def decodeDisplay(image):
           status_valid = False
           failure_reason = "Tests are not valid anymore, whatever the result (Passe vaccinal)"
         elif(int_payload.get('v')):
+          dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
+          deltav = datetime.now(timezone.utc) - dt
+          hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
           if(int_payload.get('v')[0].get('dn') == int_payload.get('v')[0].get('sd')):
-            dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
-            deltav = datetime.now(timezone.utc) - dt
-            hash = hashlib.sha256((int_payload.get('v')[0].get('co')+int_payload.get('v')[0].get('ci')).encode()).hexdigest()
             if(deltav > timedelta(days = delta_days_v)):
               if(int_payload.get('v')[0].get('vp') in valid_prophylaxis and int_payload.get('v')[0].get('mp') in valid_vaccines):
                 status_valid = True
@@ -233,6 +235,12 @@ def decodeDisplay(image):
               else:
                 status_valid = False
                 failure_reason = "Vaccination scheme delay is too short"
+          elif(int_payload.get('v')[0].get('dn') == 2):
+            if(deltav > timedelta(days = delta_days_passe_v)):
+              status_valid = False
+              failure_reason = "Second vaccine shot is too old"
+            else:
+              status_valid = True
           else:
             status_valid = False
             failure_reason = "Vaccination scheme incomplete"
