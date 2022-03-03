@@ -72,6 +72,8 @@ config = None
 
 delta_days = 2
 delta_days_v = 7
+delta_days_positive_start = 11
+delta_days_positive_end = 183
 wait_light_red = 5
 wait_light_green = 2
 delta_days_r = 183
@@ -80,6 +82,7 @@ delta_days_passe_v = 120
 valid_prophylaxis = { "J07BX03", "1119349007", "1119305005" }
 valid_vaccines = { "EU/1/20/1528", "EU/1/20/1507", "EU/1/21/1529", "EU/1/20/1525", "Covishield", "R-Covi", "R-COVI", "Covid-19 vaccine (recombinante)", "EU/1/21/1618" }
 not_detected = "260415000"
+detected = "260373001"
 booster = 3
 
 if(raspberry == True):
@@ -213,8 +216,14 @@ def decodeDisplay(image):
             status_valid = False
             failure_reason = "Recovery time window exceeded (too soon or too late)"
         elif(int_payload.get('t')):
-          status_valid = False
-          failure_reason = "Tests are not valid anymore, whatever the result (Passe vaccinal)"
+          sc = datetime.fromisoformat(int_payload.get('t')[0].get('sc'))
+          delta = datetime.now(timezone.utc) - sc
+          hash = hashlib.sha256((int_payload.get('t')[0].get('co')+int_payload.get('t')[0].get('ci')).encode()).hexdigest()
+          if(int_payload.get('t')[0].get('tr') == detected and delta > timedelta(days=delta_days_positive_start) and delta < timedelta(days=delta_days_positive_end)):
+            status_valid = True
+          else:
+            status_valid = False
+            failure_reason = "Negative tests are not accepted anymore"
         elif(int_payload.get('v')):
           dt = datetime.fromisoformat(int_payload.get('v')[0].get('dt') + "T00:00:00+00:00")
           deltav = datetime.now(timezone.utc) - dt
